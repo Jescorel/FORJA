@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forja de Hábitos</title>
+<meta name="theme-color" content="#121417">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: coluna única mobile-first, cabeçalho de nível fixo no topo, navegação por abas embaixo. Tema único escuro "forja". */
+:root{
+  --bg:#121417; --surface:#1b1e23; --surface2:#23272e; --line:#2c3139;
+  --ink:#ece7df; --muted:#8f96a0; --ember:#ff8a3d; --gold:#f2c14e;
+  --good:#5cc98a; --bad:#e5605a; --mind:#7aa7ff;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:0 16px 96px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+/* Cabeçalho */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:20px 0 16px}
+.ring{position:relative;width:76px;height:76px}
+.ring svg{transform:rotate(-90deg)}
+.ring .lv{position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1}
+.ring .lv b{font-family:var(--display);font-size:26px;font-weight:800}
+.ring .lv small{display:block;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.rank{font-family:var(--display);font-size:22px;font-weight:800}
+.xpbar{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--gold));border-radius:99px;transition:width .4s}
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.sync.ok::before{background:var(--good)} .sync.busy::before{background:var(--gold)} .sync.err::before{background:var(--bad)}
+
+/* Cartões e listas */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.daynav button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:18px}
+.daynav button:disabled{opacity:.3;cursor:default}
+.daynav h2{font-size:20px;text-align:center}
+.daynav .sub{font-size:12px;color:var(--muted);text-align:center}
+.prog{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--good);transition:width .3s}
+
+.habit{display:grid;grid-template-columns:4px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 0;overflow:hidden}
+.habit .stripe{align-self:stretch;border-radius:0 4px 4px 0}
+.habit .name{font-weight:600}
+.habit .meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px}
+.habit.done{background:#1c241f;border-color:#2c4636}
+.habit.done .name{color:var(--muted);text-decoration:line-through;text-decoration-color:#5cc98a88}
+.check{width:46px;height:46px;border-radius:12px;border:2px solid var(--line);background:var(--surface2);display:grid;place-items:center;transition:transform .12s}
+.check:active{transform:scale(.92)}
+.check svg{opacity:0}
+.done .check{background:var(--good);border-color:var(--good)}
+.done .check svg{opacity:1}
+.flame{color:var(--ember);font-weight:600}
+.chip{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--surface2);font-size:12px;font-weight:600}
+.chip.x15{background:#3a2a1a;color:var(--ember)} .chip.x2{background:#3b3216;color:var(--gold)}
+
+.empty{text-align:center;padding:28px 16px}
+.btn{border:0;border-radius:12px;padding:12px 16px;background:var(--ember);color:#1a1006;font-weight:600}
+.btn.ghost{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.sm{padding:8px 12px;font-size:13px;border-radius:10px}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);padding:10px 14px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw}
+.toast.lvup{background:linear-gradient(90deg,#3a2210,#3b3216);border-color:var(--ember);font-weight:600}
+
+/* Estatísticas */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tile b{display:block;font-family:var(--display);font-size:28px;font-weight:800;line-height:1.1}
+.tile span{font-size:12px;color:var(--muted)}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto}
+.heat i{width:14px;height:14px;border-radius:3px;background:var(--surface2)}
+.legend{display:flex;gap:4px;align-items:center;font-size:11px;color:var(--muted)}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.attr{display:grid;grid-template-columns:70px 1fr 64px;gap:10px;align-items:center;font-size:13px}
+.attr .bar{height:10px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.attr .bar i{display:block;height:100%;border-radius:99px}
+
+/* Formulários */
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+input[type=text],input[type=date],select{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1;min-width:40px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);font-size:13px}
+.seg button[aria-pressed=true]{background:var(--ember);border-color:var(--ember);color:#1a1006;font-weight:600}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.switch button{width:52px;height:30px;border-radius:99px;border:0;background:var(--surface2);position:relative;flex:none}
+.switch button::after{content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:left .2s}
+.switch button[aria-pressed=true]{background:var(--ember)}
+.switch button[aria-pressed=true]::after{left:26px;background:#1a1006}
+
+/* Navegação */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#121417ee;backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:20;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .in{display:flex;max-width:560px;width:100%}
+nav.tabs button{flex:1;background:none;border:0;padding:12px 4px 14px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px}
+nav.tabs button[aria-current=page]{color:var(--ember)}
+nav.tabs svg{width:22px;height:22px}
+
+.sheet{position:fixed;inset:0;background:#000a;display:flex;align-items:flex-end;justify-content:center;z-index:40}
+.sheet .panel{background:var(--surface);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:560px;padding:20px 16px calc(20px + env(safe-area-inset-bottom));max-height:90%;overflow:auto}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+  <header class="hero">
+    <div class="ring" id="ring"></div>
+    <div>
+      <div class="row between"><span class="rank" id="rank">Iniciante</span><span class="sync" id="sync">Conectando…</span></div>
+      <div class="xpbar"><i id="xpfill" style="width:0"></i></div>
+      <div class="row between" style="font-size:13px"><span class="num" id="xptext">0 XP</span><span class="muted num" id="xpnext"></span></div>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+<nav class="tabs"><div class="in" id="tabs"></div></nav>
+<div id="overlay"></div>
+
+<script>
+(() => {
+/* ---------- Constantes ---------- */
+const CATS = {
+  corpo:{label:"Corpo", color:"var(--ember)"},
+  mente:{label:"Mente", color:"var(--mind)"},
+  foco:{label:"Foco", color:"var(--gold)"},
+  vida:{label:"Vida", color:"var(--good)"}
+};
+const DIFF = [{xp:10,label:"Fácil"},{xp:20,label:"Médio"},{xp:30,label:"Difícil"}];
+const DOW = ["D","S","T","Q","Q","S","S"];
+const DOW_LONG = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+const RANKS = [[1,"Iniciante"],[5,"Aprendiz"],[10,"Disciplinado"],[15,"Veterano"],[20,"Mestre"],[30,"Lenda"]];
+const PERFECT_BONUS = 20;
+const STARTERS = [
+  {name:"Beber 2 L de água", cat:"corpo", xp:10, days:[0,1,2,3,4,5,6]},
+  {name:"Treinar 30 min", cat:"corpo", xp:30, days:[1,2,3,4,5]},
+  {name:"Ler 10 páginas", cat:"mente", xp:20, days:[0,1,2,3,4,5,6]},
+  {name:"Meditar 10 min", cat:"mente", xp:10, days:[0,1,2,3,4,5,6]},
+  {name:"1 h de trabalho focado", cat:"foco", xp:30, days:[1,2,3,4,5]},
+  {name:"Sem celular na 1ª hora do dia", cat:"foco", xp:20, days:[0,1,2,3,4,5,6]},
+  {name:"Dormir antes das 23h", cat:"vida", xp:20, days:[0,1,2,3,4,5,6]}
+];
+
+/* ---------- Datas ---------- */
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const d = parse(s); d.setDate(d.getDate()+n); return ymd(d); };
+const today = () => ymd(new Date());
+const diffDays = (a,b) => Math.round((parse(b)-parse(a))/86400000);
+const fmtDay = s => { const d=parse(s); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}`; };
+
+/* ---------- Estado ---------- */
+const state = {
+  habits: [],
+  settings: { hardMode:false, challenge:null },
+  logs: {},          // "AAAA-MM-DD" -> [ids]
+  loaded: false
+};
+let ui = { tab: "hoje", day: today(), editing: null };
+let lastLevel = null;
+
+/* ---------- Persistência (Supabase) ---------- */
+const CFG = window.FORJA_CONFIG || {};
+const LS_KEY = "forja-habitos-cache";
+let sb = null, session = null, mode = "connecting";
+let saveTimer = null, saving = false, dirty = false, remoteStamp = null;
+
+function setSync(kind, text){ const el=document.getElementById("sync"); el.className="sync "+kind; el.textContent=text; }
+const snapshot = () => ({ habits: state.habits, settings: state.settings, logs: state.logs });
+function cacheLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({ data: snapshot(), dirty, uid: session?.user?.id })); }catch(e){} }
+function loadCache(){
+  try{ const o = JSON.parse(localStorage.getItem(LS_KEY)||"null"); if (!o) return;
+    if (session && o.uid && o.uid !== session.user.id) return;
+    applyData(o.data||{}); dirty = !!o.dirty; }catch(e){}
+}
+function applyData(d){
+  state.habits = Array.isArray(d.habits) ? d.habits : [];
+  state.settings = Object.assign({hardMode:false, challenge:null}, d.settings||{});
+  state.logs = d.logs || {};
+}
+
+function save(){
+  dirty = true; cacheLocal();
+  if (mode !== "cloud") return;
+  setSync("busy","Salvando…");
+  clearTimeout(saveTimer); saveTimer = setTimeout(push, 700);
+}
+async function push(){
+  if (saving || !session) return;
+  if (!navigator.onLine){ setSync("err","Offline · salva ao reconectar"); return; }
+  saving = true;
+  try{
+    while (dirty){
+      dirty = false;
+      const { data, error } = await sb.from("forja_dados")
+        .upsert({ user_id: session.user.id, dados: snapshot() })
+        .select("atualizado_em").single();
+      if (error) throw error;
+      remoteStamp = data.atualizado_em;
+    }
+    cacheLocal(); setSync("ok","Sincronizado");
+  }catch(e){
+    dirty = true; cacheLocal();
+    setSync("err","Erro ao salvar · tentando de novo");
+    setTimeout(push, 5000);
+  }
+  saving = false;
+}
+async function pull(){
+  if (!session || dirty || saving) return;
+  const { data, error } = await sb.from("forja_dados").select("dados, atualizado_em").eq("user_id", session.user.id).maybeSingle();
+  if (error){ setSync("err","Sem conexão"); return; }
+  if (data && data.atualizado_em !== remoteStamp){ remoteStamp = data.atualizado_em; applyData(data.dados||{}); cacheLocal(); render(); }
+  setSync("ok","Sincronizado");
+}
+
+async function init(){
+  state.loaded = false; render();
+  if (!window.supabase || !CFG.url || CFG.url.includes("COLE_AQUI")){
+    document.getElementById("view").innerHTML = `<div class="card stack"><h2 style="font-size:20px">Falta configurar</h2>
+      <p class="muted" style="margin:0">Abra o arquivo config.js e cole a URL e a chave do seu projeto Supabase.</p></div>`;
+    setSync("err","Sem configuração"); return;
+  }
+  sb = window.supabase.createClient(CFG.url, CFG.key, { auth:{ persistSession:true, autoRefreshToken:true } });
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  sb.auth.onAuthStateChange((_e, s) => { const was = session; session = s; if (!!was !== !!s) start(); });
+  start();
+}
+async function start(){
+  if (!session){ mode = "auth"; state.loaded = true; setSync("err","Desconectado"); renderLogin(); return; }
+  mode = "cloud"; loadCache(); state.loaded = true; render();
+  if (dirty) push(); else await pull();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState==="visible" && mode==="cloud") { if (dirty) push(); else pull(); } });
+window.addEventListener("online", () => { if (mode==="cloud") { if (dirty) push(); else pull(); } });
+setInterval(() => { if (mode==="cloud" && document.visibilityState==="visible") pull(); }, 60000);
+
+function renderLogin(msg=""){
+  document.getElementById("view").innerHTML = `<form class="card stack" id="login">
+    <h2 style="font-size:22px">Entrar na Forja</h2>
+    <p class="muted" style="margin:0">Use o mesmo e-mail em todos os aparelhos para ver os mesmos hábitos.</p>
+    <div><label for="em">E-mail</label><input id="em" type="email" autocomplete="email" required style="width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px"></div>
+    <div><label for="pw">Senha (mín. 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password" minlength="6" required style="width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px"></div>
+    ${msg?`<div style="color:var(--gold);font-size:14px">${esc(msg)}</div>`:""}
+    <button class="btn" type="submit" data-mode="in">Entrar</button>
+    <button class="btn ghost" type="submit" data-mode="up">Criar conta</button>
+  </form>`;
+  const f = document.getElementById("login");
+  f.addEventListener("submit", async e => {
+    e.preventDefault();
+    const m = (e.submitter && e.submitter.dataset.mode) || "in";
+    const email = f.em.value.trim(), password = f.pw.value;
+    f.querySelectorAll("button").forEach(b=>b.disabled=true);
+    const fn = m==="up" ? sb.auth.signUp({ email, password }) : sb.auth.signInWithPassword({ email, password });
+    const { data, error } = await fn;
+    if (error){
+      const t = /Invalid login/i.test(error.message) ? "E-mail ou senha incorretos." : /registered/i.test(error.message) ? "Esse e-mail já tem conta. Toque em Entrar." : error.message;
+      renderLogin(t); return;
+    }
+    if (m==="up" && !data.session) renderLogin("Conta criada. Confirme pelo link enviado ao seu e-mail e depois toque em Entrar.");
+  });
+}
+async function logout(){ await sb.auth.signOut(); try{ localStorage.removeItem(LS_KEY); }catch(e){} state.habits=[]; state.logs={}; }
+
+/* ---------- Pontuação ---------- */
+const xpForLevel = L => 50*(L-1)*L;            // XP acumulado para atingir o nível L
+function levelFromXp(xp){ let L=1; while (xpForLevel(L+1) <= xp) L++; return L; }
+const rankFor = L => RANKS.reduce((r,[min,name]) => L>=min ? name : r, RANKS[0][1]);
+const mult = s => s>=30 ? 2 : s>=7 ? 1.5 : 1;
+
+function scheduledOn(d){
+  const dow = parse(d).getDay();
+  return state.habits.filter(h => h.created <= d && (!h.archivedAt || h.archivedAt > d) && (h.days||[]).includes(dow));
+}
+
+function compute(){
+  const t = today();
+  const res = { xp:0, perfectDays:0, perfectStreak:0, bestPerfect:0, daily:{}, per:{}, cat:{corpo:0,mente:0,foco:0,vida:0}, completions:0 };
+  if (!state.habits.length) return res;
+  for (const h of state.habits) res.per[h.id] = { streak:0, best:0, total:0 };
+  let start = state.habits.reduce((m,h)=> h.created < m ? h.created : m, t);
+  let runPerfect = 0;
+  for (let d = start; d <= t; d = addDays(d,1)){
+    const sched = scheduledOn(d);
+    const done = new Set(state.logs[d] || []);
+    let dayXp = 0, cnt = 0;
+    for (const h of sched){
+      const p = res.per[h.id];
+      if (done.has(h.id)){
+        p.streak++; p.best = Math.max(p.best,p.streak); p.total++;
+        const gain = Math.round(h.xp * mult(p.streak));
+        dayXp += gain; cnt++; res.completions++;
+        res.cat[h.cat] = (res.cat[h.cat]||0) + gain;
+      } else if (d < t){
+        p.streak = 0;
+        if (state.settings.hardMode) dayXp -= Math.round(h.xp/2);
+      }
+    }
+    const perfect = sched.length > 0 && cnt === sched.length;
+    if (perfect){ dayXp += PERFECT_BONUS; res.perfectDays++; runPerfect++; res.bestPerfect = Math.max(res.bestPerfect, runPerfect); }
+    else if (sched.length > 0 && d < t) runPerfect = 0;
+    res.daily[d] = { sched: sched.length, done: cnt, xp: dayXp, perfect };
+    res.xp = Math.max(0, res.xp + dayXp);
+  }
+  res.perfectStreak = runPerfect;
+  return res;
+}
+
+/* ---------- Utilidades de UI ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uidGen = () => Math.random().toString(36).slice(2,10);
+let toastTimer;
+function toast(msg, cls=""){
+  const old = document.querySelector(".toast"); if (old) old.remove();
+  const el = document.createElement("div"); el.className = "toast "+cls; el.textContent = msg; el.setAttribute("role","status");
+  document.body.appendChild(el); clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.remove(), 2600);
+}
+const CHECK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10170f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICONS = {
+  hoje:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M8.5 13l2.5 2.5 4.5-5"/></svg>',
+  progresso:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  habitos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg>',
+  ajustes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>'
+};
+
+/* ---------- Render ---------- */
+function renderHeader(r){
+  const L = levelFromXp(r.xp), lo = xpForLevel(L), hi = xpForLevel(L+1);
+  const pct = Math.min(100, ((r.xp-lo)/(hi-lo))*100);
+  const C = 2*Math.PI*32;
+  document.getElementById("ring").innerHTML =
+    `<svg width="76" height="76"><circle cx="38" cy="38" r="32" stroke="var(--surface2)" stroke-width="7" fill="none"/>
+     <circle cx="38" cy="38" r="32" stroke="var(--ember)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
+     <div class="lv"><div><small>Nível</small><b class="num">${L}</b></div></div>`;
+  document.getElementById("rank").textContent = rankFor(L);
+  document.getElementById("xpfill").style.width = pct+"%";
+  document.getElementById("xptext").textContent = `${r.xp.toLocaleString("pt-BR")} XP`;
+  document.getElementById("xpnext").textContent = `faltam ${(hi-r.xp).toLocaleString("pt-BR")} p/ nível ${L+1}`;
+  if (lastLevel !== null && L > lastLevel) toast(`Subiu para o nível ${L}! ${rankFor(L)}`, "lvup");
+  if (state.loaded) lastLevel = L;
+}
+
+function renderTabs(){
+  const tabs = [["hoje","Hoje"],["progresso","Progresso"],["habitos","Hábitos"],["ajustes","Ajustes"]];
+  document.getElementById("tabs").innerHTML = tabs.map(([k,l]) =>
+    `<button data-tab="${k}" ${ui.tab===k?'aria-current="page"':''}>${ICONS[k]}<span>${l}</span></button>`).join("");
+}
+
+function viewHoje(r){
+  const d = ui.day, t = today();
+  if (!state.habits.length) return `
+    <div class="card empty stack">
+      <h2>Comece sua forja</h2>
+      <p class="muted" style="margin:0">Cada hábito cumprido vale XP. Sequências multiplicam os pontos e dias perfeitos dão bônus.</p>
+      <button class="btn" data-act="starters">Usar hábitos sugeridos</button>
+      <button class="btn ghost" data-act="new">Criar meu primeiro hábito</button>
+    </div>`;
+  const sched = scheduledOn(d);
+  const done = new Set(state.logs[d]||[]);
+  const info = r.daily[d] || {sched:sched.length, done:0, xp:0};
+  const pct = sched.length ? Math.round(info.done/sched.length*100) : 0;
+  const label = d===t ? "Hoje" : d===addDays(t,-1) ? "Ontem" : DOW_LONG[parse(d).getDay()];
+  let ch = "";
+  const c = state.settings.challenge;
+  if (c && d===t){
+    const day = diffDays(c.start, t) + 1;
+    let perf = 0; for (let i=0;i<Math.min(day,c.len);i++){ const x = r.daily[addDays(c.start,i)]; if (x && x.perfect) perf++; }
+    const doneCh = day > c.len;
+    ch = `<div class="card stack" style="gap:8px">
+      <div class="row between"><h3 style="font-size:17px">Desafio de ${c.len} dias</h3><span class="chip num">${doneCh?"Concluído":`Dia ${Math.max(1,day)} de ${c.len}`}</span></div>
+      <div class="prog"><i style="width:${Math.min(100,Math.max(0,day)/c.len*100)}%;background:var(--ember)"></i></div>
+      <div class="muted" style="font-size:13px">${perf} dia(s) perfeito(s) até agora</div></div>`;
+  }
+  const items = sched.map(h => {
+    const p = r.per[h.id] || {streak:0};
+    const isDone = done.has(h.id);
+    const s = p.streak, m = mult(Math.max(s, isDone ? s : s+1));
+    const mchip = m===2 ? '<span class="chip x2">×2</span>' : m===1.5 ? '<span class="chip x15">×1,5</span>' : "";
+    return `<div class="habit ${isDone?"done":""}">
+      <div class="stripe" style="background:${CATS[h.cat]?.color||"var(--muted)"}"></div>
+      <div><div class="name">${esc(h.name)}</div>
+        <div class="meta"><span>${CATS[h.cat]?.label||""}</span><span class="num">+${h.xp} XP</span>${s?`<span class="flame num">${s} em sequência</span>`:""}${mchip}</div></div>
+      <button class="check" data-toggle="${h.id}" aria-pressed="${isDone}" aria-label="Marcar ${esc(h.name)}">${CHECK}</button>
+    </div>`;
+  }).join("");
+  return `<div class="stack">
+    <div class="daynav">
+      <button data-act="prev" aria-label="Dia anterior">‹</button>
+      <div><h2>${label}</h2><div class="sub num">${fmtDay(d)} · ${info.done}/${sched.length} feitos · ${info.xp>=0?"+":""}${info.xp} XP</div></div>
+      <button data-act="next" aria-label="Próximo dia" ${d>=t?"disabled":""}>›</button>
+    </div>
+    <div class="prog"><i style="width:${pct}%"></i></div>
+    ${ch}
+    ${items || `<div class="card empty muted">Nenhum hábito programado para este dia.</div>`}
+    ${sched.length && info.done===sched.length ? `<div class="card row" style="border-color:var(--gold)"><b style="color:var(--gold)">Dia perfeito</b><span class="muted">+${PERFECT_BONUS} XP de bônus</span></div>` : ""}
+  </div>`;
+}
+
+function viewProgresso(r){
+  const t = today();
+  const best = Object.values(r.per).reduce((m,p)=>Math.max(m,p.best),0);
+  // barras dos últimos 14 dias
+  const days = Array.from({length:14},(_,i)=>addDays(t,i-13));
+  const W=320,H=120,bw=W/14;
+  const bars = days.map((d,i)=>{
+    const x = r.daily[d]; const v = x && x.sched ? x.done/x.sched : 0;
+    const h = Math.max(2, v*(H-24));
+    const fill = x && x.perfect ? "var(--gold)" : "var(--ember)";
+    return `<rect x="${i*bw+3}" y="${H-18-h}" width="${bw-6}" height="${h}" rx="3" fill="${x&&x.sched?fill:"var(--surface2)"}"/>
+      ${i%2===1||i===13?`<text x="${i*bw+bw/2}" y="${H-4}" text-anchor="middle" font-size="9" fill="var(--muted)">${fmtDay(d).slice(0,2)}</text>`:""}`;
+  }).join("");
+  const grid = [0.5,1].map(f=>`<line x1="0" x2="${W}" y1="${H-18-f*(H-24)}" y2="${H-18-f*(H-24)}" stroke="var(--line)" stroke-dasharray="3 4"/>
+     <text x="${W}" y="${H-21-f*(H-24)}" text-anchor="end" font-size="9" fill="var(--muted)">${f*100}%</text>`).join("");
+  // mapa de calor de 18 semanas
+  const end = parse(t); const startH = addDays(t, -(17*7 + end.getDay()));
+  let cells = "";
+  for (let i=0;i<18*7;i++){
+    const d = addDays(startH,i);
+    const x = r.daily[d];
+    let bg = "var(--surface2)";
+    if (d > t) bg = "transparent";
+    else if (x && x.sched){ const v=x.done/x.sched; bg = x.perfect ? "var(--gold)" : v>=.5 ? "#c96a2e" : v>0 ? "#6b3e20" : "var(--surface2)"; }
+    cells += `<i title="${fmtDay(d)}" style="background:${bg}"></i>`;
+  }
+  const maxCat = Math.max(1, ...Object.values(r.cat));
+  const attrs = Object.entries(CATS).map(([k,c])=>{
+    const v = r.cat[k]||0; const lv = levelFromXp(v);
+    return `<div class="attr"><span>${c.label}</span><div class="bar"><i style="width:${v/maxCat*100}%;background:${c.color}"></i></div><span class="num muted" style="text-align:right">Nv ${lv}</span></div>`;
+  }).join("");
+  return `<div class="stack">
+    <div class="tiles">
+      <div class="tile"><b class="num">${r.completions}</b><span>hábitos cumpridos</span></div>
+      <div class="tile"><b class="num">${r.perfectDays}</b><span>dias perfeitos</span></div>
+      <div class="tile"><b class="num">${r.perfectStreak}</b><span>dias perfeitos seguidos</span></div>
+      <div class="tile"><b class="num">${best}</b><span>maior sequência de um hábito</span></div>
+    </div>
+    <div class="card stack"><h3 style="font-size:17px">Últimos 14 dias</h3>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Percentual de hábitos cumpridos por dia">${grid}${bars}</svg>
+      <div class="legend"><i style="background:var(--ember)"></i> parcial <i style="background:var(--gold);margin-left:8px"></i> dia perfeito</div>
+    </div>
+    <div class="card stack"><h3 style="font-size:17px">Constância (18 semanas)</h3>
+      <div class="heat">${cells}</div>
+      <div class="legend">menos <i style="background:var(--surface2)"></i><i style="background:#6b3e20"></i><i style="background:#c96a2e"></i><i style="background:var(--gold)"></i> perfeito</div>
+    </div>
+    <div class="card stack"><h3 style="font-size:17px">Atributos</h3>${attrs}
+      <div class="muted" style="font-size:12px">Cada área sobe de nível com o XP dos hábitos dela.</div></div>
+  </div>`;
+}
+
+function viewHabitos(r){
+  const list = state.habits.filter(h=>!h.archivedAt);
+  return `<div class="stack">
+    <div class="row between"><h2 style="font-size:20px">Seus hábitos</h2><button class="btn sm" data-act="new">Novo hábito</button></div>
+    ${list.length ? list.map(h=>`<div class="habit">
+      <div class="stripe" style="background:${CATS[h.cat]?.color}"></div>
+      <div><div class="name">${esc(h.name)}</div>
+      <div class="meta"><span>${CATS[h.cat]?.label}</span><span>${DIFF.find(x=>x.xp===h.xp)?.label||""} · ${h.xp} XP</span><span>${h.days.length===7?"Todo dia":h.days.map(i=>DOW[i]).join(" ")}</span><span class="num">recorde ${r.per[h.id]?.best||0}</span></div></div>
+      <button class="btn ghost sm" data-edit="${h.id}">Editar</button></div>`).join("")
+      : `<div class="card empty stack"><span class="muted">Nenhum hábito ainda.</span><button class="btn" data-act="starters">Usar hábitos sugeridos</button></div>`}
+    <div class="card muted" style="font-size:13px"><b style="color:var(--ink)">Como a pontuação funciona</b><br>
+      Fácil 10 · Médio 20 · Difícil 30 XP. A partir de 7 dias seguidos o hábito rende ×1,5, e a partir de 30, ×2. Dia com tudo cumprido: +${PERFECT_BONUS} XP.
+      No modo rígido, cada hábito esquecido tira metade do XP dele.</div>
+  </div>`;
+}
+
+function viewAjustes(){
+  const s = state.settings, c = s.challenge;
+  return `<div class="stack">
+    <div class="card stack">
+      <div class="switch"><div><b>Modo rígido</b><div class="muted" style="font-size:13px">Hábito não cumprido em dia passado perde metade do XP.</div></div>
+        <button data-act="hard" aria-pressed="${!!s.hardMode}" aria-label="Modo rígido"></button></div>
+    </div>
+    <div class="card stack">
+      <b>Desafio</b>
+      ${c ? `<div class="muted" style="font-size:14px">Desafio de ${c.len} dias, iniciado em ${fmtDay(c.start)}.</div>
+        <button class="btn ghost" data-act="endch">Encerrar desafio</button>`
+      : `<div class="muted" style="font-size:13px">Escolha a duração. O desafio conta seus dias perfeitos a partir de hoje.</div>
+        <div class="seg" id="chlen">${[21,30,40,66].map(n=>`<button data-len="${n}">${n} dias</button>`).join("")}</div>`}
+    </div>
+    <div class="card stack">
+      <b>Sua conta</b>
+      <div class="muted" style="font-size:13px">Conectado como ${esc(session?.user?.email||"")}. Tudo é salvo online e sincroniza entre os aparelhos ao abrir o app.</div>
+      <button class="btn ghost" data-act="logout">Sair da conta</button>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const r = compute();
+  renderHeader(r); renderTabs();
+  const v = document.getElementById("view");
+  if (mode==="auth"){ renderLogin(); return; }
+  if (!state.loaded){ v.innerHTML = `<div class="card empty muted">Carregando seus hábitos…</div>`; return; }
+  v.innerHTML = ui.tab==="hoje" ? viewHoje(r) : ui.tab==="progresso" ? viewProgresso(r) : ui.tab==="habitos" ? viewHabitos(r) : viewAjustes();
+}
+
+/* ---------- Editor de hábito ---------- */
+function openEditor(h){
+  const isNew = !h;
+  const f = h ? JSON.parse(JSON.stringify(h)) : { name:"", cat:"corpo", xp:20, days:[0,1,2,3,4,5,6] };
+  const o = document.getElementById("overlay");
+  const draw = () => {
+    o.innerHTML = `<div class="sheet" data-close="1"><div class="panel stack" role="dialog" aria-modal="true" aria-label="${isNew?"Novo hábito":"Editar hábito"}">
+      <h2 style="font-size:20px">${isNew?"Novo hábito":"Editar hábito"}</h2>
+      <div><label for="hname">Nome</label><input id="hname" type="text" maxlength="60" placeholder="Ex.: Ler 10 páginas" value="${esc(f.name)}"></div>
+      <div><label>Área</label><div class="seg">${Object.entries(CATS).map(([k,c])=>`<button data-cat="${k}" aria-pressed="${f.cat===k}">${c.label}</button>`).join("")}</div></div>
+      <div><label>Dificuldade</label><div class="seg">${DIFF.map(d=>`<button data-xp="${d.xp}" aria-pressed="${f.xp===d.xp}">${d.label} · ${d.xp}</button>`).join("")}</div></div>
+      <div><label>Dias da semana</label><div class="seg">${DOW.map((l,i)=>`<button data-dow="${i}" aria-pressed="${f.days.includes(i)}" aria-label="${DOW_LONG[i]}">${l}</button>`).join("")}</div></div>
+      <div class="row" style="gap:8px;margin-top:4px">
+        ${isNew?"":`<button class="btn danger sm" data-del="1">Excluir</button>`}
+        <span style="flex:1"></span>
+        <button class="btn ghost" data-close="1">Cancelar</button>
+        <button class="btn" data-savehabit="1">Salvar</button>
+      </div></div></div>`;
+  };
+  draw();
+  o.onclick = e => {
+    const b = e.target.closest("button, .sheet");
+    if (!b) return;
+    if (b.classList.contains("sheet") && e.target !== b) return;
+    f.name = (document.getElementById("hname")||{}).value ?? f.name;
+    if (b.dataset.close){ o.innerHTML=""; return; }
+    if (b.dataset.cat){ f.cat=b.dataset.cat; draw(); return; }
+    if (b.dataset.xp){ f.xp=+b.dataset.xp; draw(); return; }
+    if (b.dataset.dow){ const i=+b.dataset.dow; f.days = f.days.includes(i) ? f.days.filter(x=>x!==i) : [...f.days,i].sort(); draw(); return; }
+    if (b.dataset.del){
+      o.querySelector(".panel").innerHTML = `<h2 style="font-size:20px">Excluir “${esc(f.name)}”?</h2>
+        <p class="muted" style="margin:0">Ele sai da lista. O XP que você já ganhou com ele continua contando.</p>
+        <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn ghost" data-close="1">Cancelar</button><button class="btn danger" data-confirmdel="1">Excluir</button></div>`;
+      return;
+    }
+    if (b.dataset.confirmdel){
+      const h0 = state.habits.find(x=>x.id===f.id); if (h0) h0.archivedAt = addDays(today(),1);
+      save(); o.innerHTML=""; render(); toast("Hábito excluído"); return;
+    }
+    if (b.dataset.savehabit){
+      const name = f.name.trim();
+      if (!name){ toast("Dê um nome ao hábito"); return; }
+      if (!f.days.length){ toast("Escolha pelo menos um dia"); return; }
+      if (isNew) state.habits.push({ id:uidGen(), name, cat:f.cat, xp:f.xp, days:f.days, created:today() });
+      else Object.assign(state.habits.find(x=>x.id===f.id), { name, cat:f.cat, xp:f.xp, days:f.days });
+      save(); o.innerHTML=""; render(); toast(isNew?"Hábito criado":"Hábito atualizado"); return;
+    }
+  };
+  setTimeout(()=>{ const i=document.getElementById("hname"); if(i && isNew) i.focus(); }, 50);
+}
+
+/* ---------- Eventos ---------- */
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-tab]"); if (!b || mode==="auth") return;
+  ui.tab = b.dataset.tab; if (ui.tab==="hoje") ui.day = today(); render(); window.scrollTo(0,0);
+});
+document.getElementById("view").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.toggle){
+    const d = ui.day, id = b.dataset.toggle;
+    const arr = new Set(state.logs[d]||[]);
+    arr.has(id) ? arr.delete(id) : arr.add(id);
+    state.logs[d] = [...arr];
+    save(); render(); return;
+  }
+  if (b.dataset.edit){ openEditor(state.habits.find(h=>h.id===b.dataset.edit)); return; }
+  if (b.dataset.len){
+    state.settings.challenge = { len:+b.dataset.len, start:today() }; save(); render(); toast(`Desafio de ${b.dataset.len} dias começou`); return;
+  }
+  switch (b.dataset.act){
+    case "prev": ui.day = addDays(ui.day,-1); render(); break;
+    case "next": if (ui.day < today()){ ui.day = addDays(ui.day,1); render(); } break;
+    case "new": openEditor(null); break;
+    case "starters":
+      for (const s of STARTERS) state.habits.push({ id:uidGen(), ...s, created:today() });
+      save(); ui.tab="hoje"; render(); toast("Hábitos sugeridos adicionados. Edite à vontade."); break;
+    case "hard": state.settings.hardMode = !state.settings.hardMode; save(); render(); break;
+    case "endch": state.settings.challenge = null; save(); render(); break;
+    case "logout": await logout(); break;
+  }
+});
+document.addEventListener("keydown", e => { if (e.key==="Escape") document.getElementById("overlay").innerHTML=""; });
+
+init();
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+})();
+</script>
+</body>
+</html>

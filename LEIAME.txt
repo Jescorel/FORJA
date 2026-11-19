@@ -1,0 +1,20 @@
+FORJA DE HÁBITOS - app gratuito com sincronização online
+
+1) SUPABASE (banco online grátis)
+   - Crie conta em supabase.com > New project (anote a senha do banco).
+   - SQL Editor > New query > cole o conteúdo de supabase-setup.sql > Run.
+   - Authentication > Sign In / Providers > Email: desligue "Confirm email"
+     (opcional; se deixar ligado, confirme pelo e-mail na 1ª vez).
+   - Project Settings > API: copie "Project URL" e a chave "anon public".
+   - Cole os dois no arquivo config.js.
+
+2) GITHUB PAGES (hospedagem grátis)
+   - Crie conta em github.com > New repository > nome "forja" > Public > Create.
+   - "uploading an existing file" > envie TODOS os arquivos desta pasta > Commit.
+   - Settings > Pages > Branch: main / (root) > Save.
+   - Em 1-2 min o app fica em https://SEU-USUARIO.github.io/forja/
+
+3) INSTALAR NO CELULAR
+   - Android (Chrome): abra o link > menu ⋮ > "Instalar app".
+   - iPhone (Safari): Compartilhar > "Adicionar à Tela de Início".
+   - Crie sua conta no app com e-mail e senha. Use o mesmo login nos outros aparelhos.
