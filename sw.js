@@ -1,6 +1,6 @@
 // Guarda a "casca" do app para abrir rápido e funcionar offline.
 // Os dados sempre vêm do Supabase quando há internet.
-const CACHE = "forja-v1";
+const CACHE = "forja-v2";
 const SHELL = ["./", "index.html", "config.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {

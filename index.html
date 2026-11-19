@@ -264,24 +264,37 @@ function renderLogin(msg=""){
     <div><label for="em">E-mail</label><input id="em" type="email" autocomplete="email" required style="width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px"></div>
     <div><label for="pw">Senha (mín. 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password" minlength="6" required style="width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px"></div>
     ${msg?`<div style="color:var(--gold);font-size:14px">${esc(msg)}</div>`:""}
-    <button class="btn" type="submit" data-mode="in">Entrar</button>
-    <button class="btn ghost" type="submit" data-mode="up">Criar conta</button>
+    <button class="btn" type="button" data-mode="in">Entrar</button>
+    <button class="btn ghost" type="button" data-mode="up">Criar conta</button>
   </form>`;
   const f = document.getElementById("login");
-  f.addEventListener("submit", async e => {
-    e.preventDefault();
-    const m = (e.submitter && e.submitter.dataset.mode) || "in";
-    const email = f.em.value.trim(), password = f.pw.value;
+  const go = async m => {
+    const email = f.querySelector("#em").value.trim(), password = f.querySelector("#pw").value;
+    if (!email || !email.includes("@")) { renderLogin("Digite um e-mail válido."); return; }
+    if (password.length < 6) { renderLogin("A senha precisa ter pelo menos 6 caracteres."); return; }
     f.querySelectorAll("button").forEach(b=>b.disabled=true);
-    const fn = m==="up" ? sb.auth.signUp({ email, password }) : sb.auth.signInWithPassword({ email, password });
-    const { data, error } = await fn;
+    let res;
+    try { res = m==="up" ? await sb.auth.signUp({ email, password }) : await sb.auth.signInWithPassword({ email, password }); }
+    catch(err){ renderLogin("Sem conexão com o servidor. Verifique a internet e tente de novo."); return; }
+    const { data, error } = res;
     if (error){
-      const t = /Invalid login/i.test(error.message) ? "E-mail ou senha incorretos." : /registered/i.test(error.message) ? "Esse e-mail já tem conta. Toque em Entrar." : error.message;
+      const msg = error.message || "";
+      const t = /Invalid login/i.test(msg) ? "E-mail ou senha incorretos. Se ainda não tem conta, toque em Criar conta."
+        : /not confirmed/i.test(msg) ? "Seu e-mail ainda não foi confirmado. Abra o link que chegou no seu e-mail (veja o spam) ou desligue 'Confirm email' no Supabase."
+        : /registered|already/i.test(msg) ? "Esse e-mail já tem conta. Toque em Entrar."
+        : /rate limit|too many/i.test(msg) ? "Muitas tentativas seguidas. Espere alguns minutos e tente de novo."
+        : msg;
       renderLogin(t); return;
     }
-    if (m==="up" && !data.session) renderLogin("Conta criada. Confirme pelo link enviado ao seu e-mail e depois toque em Entrar.");
-  });
+    if (m==="up" && data.user && Array.isArray(data.user.identities) && data.user.identities.length===0){ renderLogin("Esse e-mail já tem conta. Toque em Entrar."); return; }
+    if (m==="up" && !data.session) renderLogin("Conta criada. Confirme pelo link enviado ao seu e-mail (veja o spam) e depois toque em Entrar.");
+  };
+  f.addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (b) go(b.dataset.mode); });
+  f.addEventListener("submit", e => { e.preventDefault(); go("in"); });
+  if (msg) { const em = f.querySelector("#em"); em.value = lastEmail; }
+  f.querySelector("#em").addEventListener("input", e => lastEmail = e.target.value);
 }
+let lastEmail = "";
 async function logout(){ await sb.auth.signOut(); try{ localStorage.removeItem(LS_KEY); }catch(e){} state.habits=[]; state.logs={}; }
 
 /* ---------- Pontuação ---------- */
